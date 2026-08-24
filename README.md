@@ -38,7 +38,7 @@ We are a student team working on SIH 2026 Problem Statement 26145.
 | Sayan Chakraborty | [@sayanchakraborty-spec](https://github.com/sayanchakraborty-spec) | To be decided |
 | Sudhriti Dey | [@deysudhriti4-source](https://github.com/deysudhriti4-source) | To be decided |
 | Priyangshu Howladar | [@subhohowladar706333-alt](https://github.com/subhohowladar706333-alt) | To be decided |
-| Sougata Bhunia | [@username](https://github.com/username) | To be decided |
+| Sougata Bhunia | [@SB-Link](https://github.com/SB-Link) | To be decided |
 
 > Roles will be finalized after the research and initial understanding phase.
 
