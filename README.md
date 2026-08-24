@@ -35,9 +35,9 @@ We are a student team working on SIH 2026 Problem Statement 26145.
 | Member | GitHub | Role |
 |---|---|---|
 | Priyanko Majumder | [@Priyanko2006](https://github.com/Priyanko2006) | To be decided |
-| Sayan Chakraborty | [@username](https://github.com/username) | To be decided |
+| Sayan Chakraborty | [@sayanchakraborty-spec](https://github.com/sayanchakraborty-spec) | To be decided |
 | Sudhriti Dey | [@username](https://github.com/username) | To be decided |
-| Priyangshu Howladar | [@username](https://github.com/username) | To be decided |
+| Priyangshu Howladar | [@subhohowladar706333-alt](https://github.com/subhohowladar706333-alt) | To be decided |
 | Sougata Bhunia | [@username](https://github.com/username) | To be decided |
 
 > Roles will be finalized after the research and initial understanding phase.
