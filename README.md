@@ -107,4 +107,4 @@ Evidence:
 
 ## 📌 Note
 
-This repository documents our ongoing research and development for SIH 2026 Problem Statement 26145.E
+This repository documents our ongoing research and development for SIH 2026 Problem Statement 26145.
