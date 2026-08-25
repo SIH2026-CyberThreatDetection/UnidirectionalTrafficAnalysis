@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Hackathon specific ignores
+models/*.joblib
+data/raw/
+data/splits/
+
