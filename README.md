@@ -39,6 +39,7 @@ We are a student team working on SIH 2026 Problem Statement 26145.
 | Sudhriti Dey | [@deysudhriti4-source](https://github.com/deysudhriti4-source) | To be decided |
 | Priyangshu Howladar | [@subhohowladar706333-alt](https://github.com/subhohowladar706333-alt) | To be decided |
 | Sougata Bhunia | [@SB-Link](https://github.com/SB-Link) | To be decided |
+| Swapnil Paul | [@swapnilpaul197-coder](https://github.com/swapnilpaul197-coder) | To be decided |
 
 > Roles will be finalized after the research and initial understanding phase.
 
