@@ -1,0 +1,20 @@
+experiment: E001
+target_column: project_label
+
+baseline:
+  algorithm: random_forest
+  n_estimators: 200
+  random_state: 42
+  class_weight: balanced
+
+evaluation:
+  metrics:
+    - precision
+    - recall
+    - macro_f1
+    - confusion_matrix
+
+anomaly:
+  algorithm: isolation_forest
+  n_estimators: 200
+  random_state: 42
