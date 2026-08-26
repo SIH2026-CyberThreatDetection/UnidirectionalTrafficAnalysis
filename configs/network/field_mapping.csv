@@ -1,0 +1,13 @@
+source,source_field,target,meaning,required
+zeek_conn,id.orig_h,src_ip,source address,yes
+zeek_conn,id.resp_h,dst_ip,destination address,yes
+zeek_conn,id.orig_p,src_port,source port,no
+zeek_conn,id.resp_p,dst_port,destination port,no
+zeek_conn,proto,protocol,transport protocol,yes
+zeek_conn,duration,duration,connection duration,no
+zeek_conn,orig_bytes,bytes_out,source-to-destination bytes,no
+zeek_conn,resp_bytes,bytes_in,destination-to-source bytes,no
+zeek_conn,orig_pkts,packets_out,source packets,no
+zeek_conn,resp_pkts,packets_in,destination packets,no
+zeek_conn,uid,flow_id,Zeek connection ID,yes
+

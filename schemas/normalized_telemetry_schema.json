@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NormalizedTelemetrySchema",
+  "type": "object",
+  "properties": {
+    "timestamp": { "type": "string", "description": "ISO-8601 UTC timestamp" },
+    "flow_id": { "type": "string", "description": "Deterministic connection identifier / UID" },
+    "src_ip": { "type": "string", "description": "Source IP address" },
+    "dst_ip": { "type": "string", "description": "Destination IP address" },
+    "src_port": { "type": ["integer", "null"], "description": "Source transport port" },
+    "dst_port": { "type": ["integer", "null"], "description": "Destination transport port" },
+    "protocol": { "type": "string", "description": "Transport protocol (tcp, udp, icmp)" },
+    "duration": { "type": ["number", "null"], "description": "Flow duration in seconds" },
+    "bytes_out": { "type": ["integer", "null"], "description": "Bytes sent from source to destination" },
+    "bytes_in": { "type": ["integer", "null"], "description": "Bytes received from destination to source" },
+    "packets_out": { "type": ["integer", "null"], "description": "Packets sent from source to destination" },
+    "packets_in": { "type": ["integer", "null"], "description": "Packets received from destination to source" },
+    "dns": { "type": ["object", "null"], "description": "DNS query/response metadata" },
+    "tls": { "type": ["object", "null"], "description": "TLS handshake metadata" },
+    "quic": { "type": ["object", "null"], "description": "QUIC metadata" },
+    "sensor": { "type": "string", "description": "Sensor name (zeek, suricata)" },
+    "sensor_version": { "type": "string", "description": "Sensor version string" }
+  },
+  "required": ["timestamp", "flow_id", "src_ip", "dst_ip", "protocol", "sensor"]
+}
+
