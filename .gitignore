@@ -221,4 +221,4 @@ __marimo__/
 models/*.joblib
 data/raw/
 data/splits/
-
+data/telemetry/
