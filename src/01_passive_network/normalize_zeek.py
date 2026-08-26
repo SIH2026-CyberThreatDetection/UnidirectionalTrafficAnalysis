@@ -107,7 +107,8 @@ def normalize(raw_dir, output_file):
     print(f"Successfully normalized {count} flows to {output_file}")
 
 if __name__ == "__main__":
-    raw_path = "data/raw/zeek/sample"
-    out_path = "telemetry/normalized/normalized_telemetry.jsonl"
+    raw_path = "data/telemetry/raw/zeek/sample"
+    out_path = "data/telemetry/normalized/normalized_telemetry.jsonl"
     normalize(raw_path, out_path)
+
 
