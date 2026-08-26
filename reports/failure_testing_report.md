@@ -1,4 +1,4 @@
-# Pipeline Failure & Resilience Testing Report (Step 33)
+# Pipeline Failure & Resilience Testing Report 
 
 This document outlines how the telemetry ingestion and validation pipeline handles simulated failure cases and edge-case anomalies to ensure sustained stability.
 
