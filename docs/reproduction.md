@@ -1,4 +1,4 @@
-# Phase 5: Pipeline Reproduction & Engineering Handoff
+# Pipeline Reproduction & Engineering Handoff
 
 ## 1. Raw & Normalized Paths
 * **Raw PCAP:** `data/pcaps/test/sample.pcap` (Kept out of version control due to size limits)
