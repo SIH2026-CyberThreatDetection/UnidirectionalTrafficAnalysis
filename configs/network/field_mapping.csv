@@ -10,4 +10,11 @@ zeek_conn,resp_bytes,bytes_in,destination-to-source bytes,no
 zeek_conn,orig_pkts,packets_out,source packets,no
 zeek_conn,resp_pkts,packets_in,destination packets,no
 zeek_conn,uid,flow_id,Zeek connection ID,yes
+suricata,flow_id,flow_id,Flow identifier,yes
+suricata,timestamp,timestamp,event timestamp,yes
+suricata,src_ip,src_ip,source address,yes
+suricata,dest_ip,dst_ip,destination address,yes
+suricata,src_port,src_port,source port,no
+suricata,dest_port,dst_port,destination port,no
+suricata,proto,protocol,protocol,yes
 
