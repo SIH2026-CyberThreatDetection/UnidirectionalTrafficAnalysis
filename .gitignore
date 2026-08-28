@@ -229,3 +229,5 @@ data/interim/
 data/processed/
 *.csv
 models/*.pkl
+data/processed/val/val.csv
+data/processed/train/train.csv

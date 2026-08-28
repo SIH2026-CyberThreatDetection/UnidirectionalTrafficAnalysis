@@ -1,18 +1,33 @@
-import joblib
 import pandas as pd
+import joblib
+import warnings
+import json
+import numpy as np
+from datetime import datetime
 from pathlib import Path
 
-def run_live_scan(flow_data: dict, model_path: Path):
-    """Simulates live SOC prediction for a single incoming network flow."""
-    print(f"\n[!] INCOMING FLOW: {flow_data.get('src_ip')} -> {flow_data.get('dst_ip')}")
+# Suppress sklearn warnings for clean terminal output
+warnings.filterwarnings("ignore")
+
+def run_m4_json_terminal():
+    print("===================================================")
+    print("   NTRO 26145: M4 JSON PREDICTION STREAM ACTIVE    ")
+    print("===================================================\n")
     
-    if not model_path.exists():
-        print("Error: AI Model offline.")
-        return
+    iso_forest = joblib.load("models/isolation_forest.pkl")
+    xgboost_model = joblib.load("models/xgboost_classifier.pkl")
     
-    model = joblib.load(model_path)
+    # Map the AI's integer output back to the SIH text strings
+    target_names = {
+        0: "benign",
+        1: "ddos",
+        2: "botnet_c2",
+        3: "dns_tunneling",
+        4: "encrypted_malware",
+        5: "reconnaissance",
+        6: "data_exfiltration"
+    }
     
-    # The 12-Feature Golden Schema
     features = [
         'Destination Port', 'Flow Duration', 'Total Packets', 
         'Total Length of Packets', 'Flow Bytes/s', 'Flow Packets/s', 
@@ -20,53 +35,51 @@ def run_live_scan(flow_data: dict, model_path: Path):
         'Down/Up Ratio', 'dns_query_length', 'dns_entropy'
     ]
     
-    df = pd.DataFrame([flow_data])
-    X = df[features].fillna(0)
+    live_traffic = pd.DataFrame([
+        [443, 50000, 10, 5000, 100000.0, 200.0, 1200, 500.0, 550.0, 1.0, 0, 0.0],          # Normal
+        [80, 1000, 5000, 250000, 250000000.0, 5000000.0, 50, 50.0, 50.0, 0.0, 0, 0.0],       # DDoS
+        [22, 200000, 50, 4000, 20000.0, 250.0, 80, 80.0, 80.0, 0.5, 0, 0.0],                 # Brute Force (Encrypted Malware)
+        [53, 15000, 4, 600, 40000.0, 266.6, 300, 150.0, 175.0, 1.0, 185, 4.2],               # DNS Tunneling
+        [4444, 800000, 15, 950000, 1187500.0, 18.7, 65000, 63000.0, 64000.0, 0.1, 0, 0.0]    # Unknown Zero-Day
+    ], columns=features)
     
-    prediction = model.predict(X)[0]
-    
-    if prediction == -1:
-        print(">>> [ALERT] ZERO-DAY THREAT DETECTED! Mathematical anomaly found.")
-    else:
-        print(">>> [OK] Traffic profile is normal.")
+    for i, (index, row) in enumerate(live_traffic.iterrows()):
+        flow_data = pd.DataFrame([row])
+        port = int(row['Destination Port'])
+        
+        # Engine 1: Anomaly Detection
+        is_anomaly = iso_forest.predict(flow_data)[0] == -1
+        
+        # Engine 2: Multiclass Classification & Confidence Scoring
+        xgboost_probs = xgboost_model.predict_proba(flow_data)[0]
+        xgboost_pred_idx = int(np.argmax(xgboost_probs))
+        confidence = float(xgboost_probs[xgboost_pred_idx])
+        
+        threat_class = target_names[xgboost_pred_idx]
+        
+        # Dual-Engine Logic: If XGBoost misses it but IsoForest catches it
+        if is_anomaly and xgboost_pred_idx == 0:
+            threat_class = "zero_day_anomaly"
+            confidence = 0.8500 # Baseline confidence for mathematical anomalies
+            
+        # Only output alerts for malicious traffic (M4 doesn't need to see normal traffic)
+        if threat_class != "benign":
+            contract = {
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "flow_id": f"192.168.1.100:{port}",
+                "threat_class": threat_class,
+                "confidence": round(confidence, 4),
+                "model_version": "M3-DualEngine-v1.0",
+                "feature_version": "M2-v1.0",
+                "evidence": [
+                    {"feature": "Destination Port", "value": port},
+                    {"feature": "Flow Bytes/s", "value": float(row['Flow Bytes/s'])},
+                    {"feature": "dns_entropy", "value": float(row['dns_entropy'])}
+                ]
+            }
+            
+            # Print the machine-readable JSON object
+            print(json.dumps(contract, indent=2))
 
 if __name__ == "__main__":
-    print("--- NTRO LIVE THREAT DETECTION SYSTEM ---")
-    model_file = Path("models/isolation_forest.pkl")
-    
-    # 1. Normal Web Browsing
-    normal_flow = {
-        'src_ip': '192.168.1.100', 'dst_ip': '104.18.32.7',
-        'Destination Port': 443, 'Flow Duration': 1500000,
-        'Total Packets': 15, 'Total Length of Packets': 3500,
-        'Flow Bytes/s': 2333.33, 'Flow Packets/s': 10.0,
-        'Packet Length Max': 500, 'Packet Length Mean': 233.33,
-        'Average Packet Size': 233.33, 'Down/Up Ratio': 0,
-        'dns_query_length': 0, 'dns_entropy': 0.0
-    }
-    
-    # 2. Volumetric Data Exfiltration (e.g., Reverse Shell to C2)
-    attack_flow = {
-        'src_ip': '192.168.1.100', 'dst_ip': '45.33.12.9',
-        'Destination Port': 4444, 'Flow Duration': 50000,
-        'Total Packets': 8500, 'Total Length of Packets': 9500000,
-        'Flow Bytes/s': 190000.0, 'Flow Packets/s': 170.0,
-        'Packet Length Max': 1460, 'Packet Length Mean': 1117.6,
-        'Average Packet Size': 1117.6, 'Down/Up Ratio': 0,
-        'dns_query_length': 0, 'dns_entropy': 0.0
-    }
-
-    # 3. Stealthy DNS Tunneling (e.g., Cobalt Strike Beaconing)
-    dns_tunnel_flow = {
-        'src_ip': '192.168.1.100', 'dst_ip': '8.8.8.8',
-        'Destination Port': 53, 'Flow Duration': 4500,
-        'Total Packets': 45, 'Total Length of Packets': 5800,
-        'Flow Bytes/s': 1288.8, 'Flow Packets/s': 10.0,
-        'Packet Length Max': 250, 'Packet Length Mean': 128.8,
-        'Average Packet Size': 128.8, 'Down/Up Ratio': 0,
-        'dns_query_length': 185, 'dns_entropy': 4.92 # High entropy payload
-    }
-
-    run_live_scan(normal_flow, model_file)
-    run_live_scan(attack_flow, model_file)
-    run_live_scan(dns_tunnel_flow, model_file)
+    run_m4_json_terminal()
