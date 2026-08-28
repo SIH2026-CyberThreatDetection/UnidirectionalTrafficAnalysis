@@ -223,3 +223,9 @@ data/raw/
 data/splits/
 data/telemetry/
 *.pcap
+
+# AI Pipeline & Massive CSV ignores
+data/interim/
+data/processed/
+*.csv
+models/*.pkl

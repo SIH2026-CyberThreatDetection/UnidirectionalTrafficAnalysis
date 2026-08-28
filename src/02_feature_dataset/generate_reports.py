@@ -8,7 +8,8 @@ def generate_dataset_profile():
     """Generates Phase 6 automated dataset and feature profiles."""
     logging.info("Generating Phase 6 Dataset & Split Reports...")
     
-    final_path = Path("data/processed/final_feature_matrix.csv")
+    # Updated to point to our new Hackathon-compliant dataset
+    final_path = Path("data/interim/cic_ids2017_clean.csv")
     train_path = Path("data/processed/train/train.csv")
     val_path = Path("data/processed/val/val.csv")
     test_path = Path("data/processed/test/test.csv")
@@ -17,14 +18,14 @@ def generate_dataset_profile():
     report_path = report_dir / "dataset_profile.md"
 
     if not final_path.exists():
-        logging.error(f"Final matrix not found at {final_path}")
+        logging.error(f"Final matrix not found at {final_path}. Have you run the pipeline yet?")
         return
 
-    # Load datasets
-    df = pd.read_csv(final_path)
-    train_df = pd.read_csv(train_path) if train_path.exists() else []
-    val_df = pd.read_csv(val_path) if val_path.exists() else []
-    test_df = pd.read_csv(test_path) if test_path.exists() else []
+    # Load datasets (low_memory=False prevents Pandas from crashing on massive files)
+    df = pd.read_csv(final_path, low_memory=False)
+    train_df = pd.read_csv(train_path, low_memory=False) if train_path.exists() else []
+    val_df = pd.read_csv(val_path, low_memory=False) if val_path.exists() else []
+    test_df = pd.read_csv(test_path, low_memory=False) if test_path.exists() else []
 
     # Ensure output directory exists
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -35,7 +36,7 @@ def generate_dataset_profile():
         f.write("## 1. Dataset Overview (Step 49)\n")
         f.write(f"- **Total Rows:** {len(df)}\n")
         f.write(f"- **Total Columns:** {len(df.columns)}\n")
-        f.write(f"- **Missing Values (Post-Imputation):** {df.isnull().sum().sum()}\n\n")
+        f.write(f"- **Missing Values:** {df.isnull().sum().sum()}\n\n")
 
         f.write("## 2. Split Report (Step 52)\n")
         f.write(f"- **Train Rows:** {len(train_df)}\n")

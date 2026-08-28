@@ -1,5 +1,6 @@
 import joblib
 from pathlib import Path
+import pandas as pd
 from data_loader import load_dataset
 
 def main():
@@ -15,11 +16,12 @@ def main():
     # 1. Load unseen future traffic
     df_test = load_dataset(test_path)
     
-    # 2. Extract the exact same features used in training
+    # 2. Extract the EXACT same features used in training
     features = [
-        'total_bytes', 'total_packets', 'byte_ratio', 'packet_ratio', 
-        'bytes_per_second', 'packets_per_second', 'dns_query_length', 
-        'dns_entropy', 'is_encrypted'
+        'Destination Port', 'Flow Duration', 'Total Packets', 
+        'Total Length of Packets', 'Flow Bytes/s', 'Flow Packets/s', 
+        'Packet Length Max', 'Packet Length Mean', 'Average Packet Size', 
+        'Down/Up Ratio'
     ]
     X_test = df_test[features].fillna(0)
     
@@ -27,7 +29,7 @@ def main():
     print(f"Loading trained AI from {model_path}...")
     model = joblib.load(model_path)
     
-    # 4. Make predictions (Isolation Forest outputs 1 for Normal, -1 for Anomaly)
+    # 4. Make predictions
     print("Scanning test traffic for zero-day threats...\n")
     predictions = model.predict(X_test)
     
@@ -35,14 +37,15 @@ def main():
     df_test['ai_prediction'] = predictions
     df_test['threat_status'] = df_test['ai_prediction'].map({1: 'Normal', -1: 'THREAT DETECTED'})
     
-    print("=== LIVE DETECTION RESULTS (TEST SET) ===")
+    print("=== LIVE DETECTION RESULTS (TEST SET SAMPLE) ===")
     
-    # Handle missing columns gracefully just in case
-    display_cols = ['timestamp', 'src_ip', 'dst_ip']
+    # Display relevant historical columns alongside the prediction
+    display_cols = ['Destination Port', 'Flow Duration', 'Total Packets']
     existing_cols = [col for col in display_cols if col in df_test.columns]
     existing_cols.append('threat_status')
     
-    print(df_test[existing_cols].to_string(index=False))
+    # Print the first 15 rows so it doesn't flood your terminal
+    print(df_test[existing_cols].head(15).to_string(index=False))
     
     # Print Summary
     anomalies = (predictions == -1).sum()
@@ -51,3 +54,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

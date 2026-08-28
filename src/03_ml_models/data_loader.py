@@ -6,7 +6,7 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found: {path}")
 
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, low_memory=False)
     print(f"Loaded: {path}")
     print(f"Rows: {len(df)}")
     print(f"Columns: {len(df.columns)}")

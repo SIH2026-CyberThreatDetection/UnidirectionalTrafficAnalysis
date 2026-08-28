@@ -1,38 +1,38 @@
-from pathlib import Path
 import joblib
+import pandas as pd
+from pathlib import Path
 from data_loader import load_dataset
 from anomaly_detector import build_anomaly_detector
 
-# Point to the strictly split M2 data
-TRAIN_PATH = Path("data/processed/train/train.csv")
+# Point to the newly fused master dataset
+TRAIN_PATH = Path("data/processed/train/master_train.csv")
 MODEL_OUT = Path("models/isolation_forest.pkl")
 
 def main():
     print("ML training pipeline initialized.")
     print(f"Expected data: {TRAIN_PATH}")
     
-    # 1. Load data using your custom module
     df = load_dataset(TRAIN_PATH)
     
-    # 2. Select the M2 engineered features
+    # The 10 core volumetric features + 2 new synthetic DNS features
     features = [
-        'total_bytes', 'total_packets', 'byte_ratio', 'packet_ratio', 
-        'bytes_per_second', 'packets_per_second', 'dns_query_length', 
-        'dns_entropy', 'is_encrypted'
+        'Destination Port', 'Flow Duration', 'Total Packets', 
+        'Total Length of Packets', 'Flow Bytes/s', 'Flow Packets/s', 
+        'Packet Length Max', 'Packet Length Mean', 'Average Packet Size', 
+        'Down/Up Ratio', 'dns_query_length', 'dns_entropy'
     ]
+    
     X_train = df[features].fillna(0)
     
-    # 3. Build model using your custom anomaly module
-    print("Building Baseline Anomaly Detector...")
+    print("Building Multi-Vector Anomaly Detector...")
     model = build_anomaly_detector()
     
-    print("Training model...")
+    print(f"Training model on {len(X_train)} combined rows (This might take a minute)...")
     model.fit(X_train)
     
-    # 4. Save the compiled model
     MODEL_OUT.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, MODEL_OUT)
-    print(f"Model successfully trained and saved to {MODEL_OUT}")
+    print(f"Upgraded model successfully trained and saved to {MODEL_OUT}")
 
 if __name__ == "__main__":
     main()
