@@ -1,0 +1,51 @@
+timestamp,flow_id,src_ip,dst_ip,src_port,dst_port,protocol,duration,bytes_out,bytes_in,packets_out,packets_in,dns,tls,quic,sensor,sensor_version,suricata_events
+2017-07-07T12:02:04.217182+00:00,CFk88g2Ohl22GxtIv7,192.168.10.14,23.50.75.27,49441,80,tcp,0.000104,0,0,2,2,,,,zeek,zeek-native,[]
+2017-07-07T12:02:44.141577+00:00,Cgmi3U3g6EDaWLWX2b,192.168.10.25,224.0.0.251,5353,5353,udp,2.758425,4044,0,24,0,"{'query': '_airport._tcp.local', 'qtype_name': 'PTR', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['mdns', 'flow']"
+2017-07-07T12:02:37.159004+00:00,CMqGae3cyFCF0dPycg,fe80::baac:6fff:fe36:ba8,ff02::fb,5353,5353,udp,3.8e-05,468,0,12,0,"{'query': '_sane-port._tcp.local', 'qtype_name': 'PTR', 'rcode_name': None}",,,zeek,zeek-native,[]
+2017-07-07T12:02:37.159036+00:00,C2a3ijTiX3jVQheB9,192.168.10.51,224.0.0.251,5353,5353,udp,1.6e-05,468,0,12,0,"{'query': '_sane-port._tcp.local', 'qtype_name': 'PTR', 'rcode_name': None}",,,zeek,zeek-native,"['mdns', 'flow']"
+2017-07-07T12:02:08.234232+00:00,CoVnUJ20dS7sUY5q43,192.168.10.9,192.168.10.3,137,137,udp,0.000138,136,124,2,2,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:08.978206+00:00,CmuceH20vHshDsbBc6,192.168.10.51,192.168.10.3,10062,53,udp,0.000232,100,200,2,2,"{'query': '_ldap._tcp.dc._msdcs.testbed1.ca', 'qtype_name': 'SRV', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:08.991547+00:00,CWOHw025XiywsVIp99,192.168.10.51,192.168.10.3,14261,53,udp,0.000237,162,262,2,2,"{'query': '_ldap._tcp.default-first-site-name._sites.dc._msdcs.testbed1.ca', 'qtype_name': 'SRV', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:15.163272+00:00,C7QG8Q1dHJvmYTUgwi,192.168.10.5,64.4.27.50,49184,443,tcp,0.589666,1945,4829,10,7,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'server_name': 'fe2.ws.microsoft.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:15.699836+00:00,CPfK7Q3sbT6o3EIbQe,192.168.10.5,64.4.27.50,49186,443,tcp,0.588015,1689,4749,10,8,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'server_name': 'fe2.ws.microsoft.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:14.526589+00:00,C0OWc724W8xLhr0nS9,192.168.10.5,192.168.10.3,54897,53,udp,0.024079,82,386,2,2,"{'query': 'ctldl.windowsupdate.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:14.526838+00:00,CEzEyP2jTm0hNMOGRi,192.168.10.3,192.168.10.1,60235,53,udp,0.023588,47,79,1,1,"{'query': 'a1621.g.akamai.net', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:14.950123+00:00,CF9WVZ2bmYKobbJWa,192.168.10.5,192.168.10.3,63088,53,udp,0.212814,76,228,2,2,"{'query': 'fe2.ws.microsoft.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:14.950325+00:00,COYZPasPh4oWOnYpd,192.168.10.3,192.168.10.1,61231,53,udp,0.212376,49,125,1,1,"{'query': 'fe2.ws.microsoft.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:15.163292+00:00,COEjs61T4vmIydWqW5,192.168.10.5,64.4.27.50,49185,443,tcp,5.582173,25345,50534,36,44,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'server_name': 'fe2.ws.microsoft.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:22.874982+00:00,Cqohoj4lUgm5xIPqai,192.168.10.5,64.4.27.50,49187,443,tcp,0.539117,1769,4829,9,8,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'server_name': 'fe2.ws.microsoft.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:23.435801+00:00,Cy9JC241go32LwAhM8,192.168.10.5,64.4.27.50,49188,443,tcp,0.65837,2793,10733,11,11,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'server_name': 'fe2.ws.microsoft.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:24.055939+00:00,CzdXUD3qseLVqn0fcf,192.168.10.5,64.4.27.50,49189,443,tcp,0.640856,7129,5389,12,10,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384', 'server_name': 'fe2.ws.microsoft.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:25.388884+00:00,C0F8bH2Tt3Dj94ev8f,192.168.10.9,192.168.10.50,1063,39269,tcp,0.217545,10257,0,18,10,,,,zeek,zeek-native,"['fileinfo', 'ftp_data', 'flow']"
+2017-07-07T12:02:25.145992+00:00,CU2u852vAp5e5E9All,192.168.10.9,192.168.10.50,1062,21,tcp,0.461274,88,220,22,28,,,,zeek,zeek-native,"['ftp', 'flow']"
+2017-07-07T12:03:05.533907+00:00,CXqCrV3QXDJOD6DnZ9,192.168.10.17,224.0.0.251,5353,5353,udp,1.7e-05,540,0,12,0,"{'query': '_ipps._tcp.local', 'qtype_name': 'PTR', 'rcode_name': None}",,,zeek,zeek-native,"['mdns', 'flow']"
+2017-07-07T12:03:05.533874+00:00,CXwlrUwfkNDCFLJZ6,fe80::223:aeff:fe9b:9567,ff02::fb,5353,5353,udp,4e-05,540,0,12,0,"{'query': '_ipps._tcp.local', 'qtype_name': 'PTR', 'rcode_name': None}",,,zeek,zeek-native,[]
+2017-07-07T12:02:23.728519+00:00,CBXogh3iQaYgBXPEK2,192.168.10.14,192.168.10.3,53383,53,udp,0.203118,88,292,2,2,"{'query': 'officeclient.microsoft.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:23.728708+00:00,CUvsHA2WAdR1W8HPPh,192.168.10.3,192.168.10.1,61030,53,udp,0.20266,55,157,1,1,"{'query': 'officeclient.microsoft.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:25.140310+00:00,CP426MvKna0slBIa4,192.168.10.5,192.168.10.3,49649,53,udp,0.435781,92,444,2,2,"{'query': 'bg4.v4.emdl.ws.microsoft.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:25.140526+00:00,CXPdKapwIBWEeFyN1,192.168.10.3,192.168.10.1,60237,53,udp,0.435218,57,233,1,1,"{'query': 'bg4.v4.emdl.ws.microsoft.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:31.726500+00:00,CVMwfh1HC9gfy1U2Ha,192.168.10.9,192.168.10.3,1058,135,tcp,6.1e-05,0,0,4,4,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:31.726550+00:00,CrzJpuJAOyWcItGUf,192.168.10.9,192.168.10.3,1041,49666,tcp,3e-05,0,0,4,4,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:30.404641+00:00,CxL75n9MFpXzhQLWk,192.168.10.14,192.168.10.3,54990,53,udp,0.061642,82,386,2,2,"{'query': 'ctldl.windowsupdate.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:03:38.167320+00:00,CxVkFC4z0VhbXAYUD9,192.168.10.3,192.168.10.1,60211,53,udp,0.060909,50,106,1,1,"{'query': 'a19.dscg10.akamai.net', 'qtype_name': 'AAAA', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:28.196198+00:00,C0XPjpS6relSRB7Ne,192.168.10.9,192.168.10.50,1064,22,tcp,7.682445,1284,3477,42,46,,,,zeek,zeek-native,"['ssh', 'flow']"
+2017-07-07T12:02:36.418249+00:00,Cy06As33akkHPvbHJ7,192.168.10.8,192.168.10.3,1033,88,tcp,0.000725,236,207,8,8,,,,zeek,zeek-native,"['krb5', 'flow']"
+2017-07-07T12:02:36.435560+00:00,CG1KAH1QsQfnQXeATb,192.168.10.8,192.168.10.3,1034,88,tcp,0.000937,316,1556,10,8,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:36.438715+00:00,Cn2uJh3caUAxlhrTy8,192.168.10.8,192.168.10.3,1035,88,tcp,0.001058,1561,1520,10,10,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:36.471941+00:00,CO9aTx23aCTdfJ4ic9,192.168.10.8,192.168.10.3,1038,88,tcp,0.000979,1539,1496,10,10,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:36.476061+00:00,CPRaNU10TrDzYmWmDf,192.168.10.8,192.168.10.3,1039,88,tcp,0.001163,1428,1442,8,8,,,,zeek,zeek-native,"['krb5', 'flow']"
+2017-07-07T12:02:36.477234+00:00,Cm7u84LvzKm8EmcL1,192.168.10.8,192.168.10.3,1040,88,tcp,0.000779,2519,129,10,10,,,,zeek,zeek-native,"['krb5', 'flow']"
+2017-07-07T12:02:36.495053+00:00,CK1ExT1d2CCAiW3j9,192.168.10.8,192.168.10.3,1042,88,tcp,0.000582,236,207,8,8,,,,zeek,zeek-native,"['krb5', 'flow']"
+2017-07-07T12:02:36.511779+00:00,CpSQR92iZ73Y9jdKlc,192.168.10.8,192.168.10.3,1043,88,tcp,0.001046,316,1556,10,8,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:36.513048+00:00,CoH7N132tt4O9MHRgj,192.168.10.8,192.168.10.3,1044,88,tcp,0.001077,1561,1520,10,10,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:36.492169+00:00,C3HFQJ3Qe2pcWZL9O7,192.168.10.8,192.168.10.3,1041,389,tcp,0.023531,2015,2844,14,13,,,,zeek,zeek-native,"['ldap', 'anomaly', 'flow']"
+2017-07-07T12:02:36.632498+00:00,Cv2Tj12MjUvQCfuFF1,192.168.10.8,192.168.10.3,1047,88,tcp,0.001065,1548,1514,10,10,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:36.633668+00:00,CaLJQV2LsVCruayXe3,192.168.10.8,192.168.10.3,1048,88,tcp,0.000686,1421,1434,8,8,,,,zeek,zeek-native,"['krb5', 'flow']"
+2017-07-07T12:02:36.569659+00:00,CBI2T8Bn97bdyNwgk,192.168.10.8,192.168.10.3,1045,389,tcp,0.069871,1928,510,14,14,,,,zeek,zeek-native,"['anomaly', 'ldap', 'flow']"
+2017-07-07T12:02:35.879242+00:00,C8Rs7lveLhliV8vH1,192.168.10.9,192.168.10.50,1068,22,tcp,1.433099,1316,3317,38,42,,,,zeek,zeek-native,"['ssh', 'flow']"
+2017-07-07T12:02:32.372705+00:00,C1RYyD1EIY4hXlhDEh,192.168.10.9,192.168.10.3,53123,53,udp,0.126069,64,204,2,2,"{'query': 'smtp.gmail.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:32.372886+00:00,CAFlwf288ffZh3T0ad,192.168.10.3,192.168.10.1,61738,53,udp,0.125659,43,113,1,1,"{'query': 'smtp.gmail.com', 'qtype_name': 'A', 'rcode_name': 'NOERROR'}",,,zeek,zeek-native,"['dns', 'flow']"
+2017-07-07T12:02:37.550724+00:00,Cavp7f1bzADykS5YXk,192.168.10.14,64.4.54.254,49446,443,tcp,0.063254,0,0,2,1,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:37.550874+00:00,C9zzaq3m3LG62rOIUe,192.168.10.14,13.78.188.147,49442,443,tcp,0.06359,0,0,2,1,,,,zeek,zeek-native,['flow']
+2017-07-07T12:02:32.501097+00:00,Ca2Qe341bZ0XBhErF,192.168.10.9,173.194.66.108,1065,465,tcp,5.703285,1383,4520,21,25,,"{'version': 'TLSv10', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA', 'server_name': 'smtp.gmail.com'}",,zeek,zeek-native,"['tls', 'flow']"
+2017-07-07T12:02:38.035426+00:00,Ci6dwc3ERVTFXWWQsa,192.168.10.9,220.243.219.55,1070,443,tcp,0.377368,351,5474,10,13,,"{'version': 'TLSv12', 'cipher': 'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256', 'server_name': 'www.eastmoney.com'}",,zeek,zeek-native,"['tls', 'flow']"

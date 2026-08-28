@@ -1,0 +1,11 @@
+{
+    "BENIGN": 0,
+    "DDoS": 1,
+    "Botnet_C2": 2,
+    "DNS_Tunneling": 3,
+    "Encrypted_Malware": 4,
+    "Reconnaissance": 5,
+    "Exfiltration": 6,
+    "Web_Attack": 7,
+    "Brute_Force": 8
+}

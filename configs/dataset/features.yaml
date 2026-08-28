@@ -1,0 +1,19 @@
+version: "1.0"
+windows: [10s, 30s, 60s]
+
+flow_basic: true
+rates: true
+asymmetry: true
+recon: true
+beaconing: true
+dns: true
+tls_metadata: true
+
+leakage_columns:
+  - label
+  - attack_type
+  - day
+  - source_file
+  - scenario_id
+  - src_ip
+  - dst_ip
