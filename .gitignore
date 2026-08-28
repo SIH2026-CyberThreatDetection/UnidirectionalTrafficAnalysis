@@ -222,3 +222,4 @@ models/*.joblib
 data/raw/
 data/splits/
 data/telemetry/
+*.pcap

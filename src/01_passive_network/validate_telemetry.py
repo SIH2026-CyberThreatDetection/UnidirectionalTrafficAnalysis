@@ -1,4 +1,5 @@
 import json
+import argparse
 from collections import defaultdict
 
 def validate_telemetry(file_path):
@@ -111,5 +112,8 @@ def validate_telemetry(file_path):
     print("="*45)
 
 if __name__ == "__main__":
-    master_file = "data/telemetry/normalized/master_telemetry.jsonl"
-    validate_telemetry(master_file)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", default="data/telemetry/normalized/master_telemetry.jsonl")
+    args = parser.parse_args()
+    
+    validate_telemetry(args.input)
