@@ -23,33 +23,27 @@ def run_script(script_path):
     return True
 
 if __name__ == "__main__":
-    logging.info("Starting Environment-Aware Feature Pipeline...")
+    print("===================================================")
+    print("   UNIFIED M2 FEATURE PIPELINE (STRICT PARITY)     ")
+    print("===================================================")
     
-    raw_dir = Path("data/raw")
+    # NO AUTO-DETECT VIRUS.
+    # The pipeline strictly enforces that all data goes through the 
+    # exact same mathematical extraction, merging, and scaling.
     
-    # Auto-Detect Logic: Check if we are processing CSVs (Training) or JSONL (Live Finals)
-    if list(raw_dir.glob("*.csv")):
-        logging.info("MODE DETECTED: AI Training (Historical CSV Data)")
-        logging.info("Bypassing DNS/TLS extraction because CSVs already contain pre-engineered numeric features.")
-        scripts_in_order = [
-            "src/02_feature_dataset/clean.py",
-            "src/02_feature_dataset/split.py"
-        ]
-    else:
-        logging.info("MODE DETECTED: Live Hackathon Finals (Zeek/Suricata Telemetry)")
-        logging.info("Running full Flow, DNS, and TLS threat detection extraction.")
-        scripts_in_order = [
-            "src/02_feature_dataset/clean.py",
-            "src/02_feature_dataset/flow_features.py",
-            "src/02_feature_dataset/dns_features.py",
-            "src/02_feature_dataset/tls_features.py",
-            "src/02_feature_dataset/split.py"
-        ]
+    scripts_in_order = [
+        "src/02_feature_dataset/clean.py",              # 1. Enforce data types and SIH constraints
+        "src/02_feature_dataset/flow_features.py",      # 2. Ratios & Rates
+        "src/02_feature_dataset/dns_features.py",       # 3. DNS Entropy
+        "src/02_feature_dataset/tls_features.py",       # 4. SNI Entropy & Deprecated Crypto
+        "src/02_feature_dataset/merge_datasets.py",     # 5. Inject synthetic attacks BEFORE scaling
+        "src/02_feature_dataset/split.py",              # 6. Time-Aware Split & Scaler Fit
+        "src/02_feature_dataset/generate_reports.py"    # 7. Auto-generate Markdown for judges
+    ]
     
     for script in scripts_in_order:
         success = run_script(script)
         if not success:
             sys.exit(1)
             
-    logging.info("Phase 5 Complete: Pipeline executed successfully from start to finish.")
-
+    logging.info("M2 Phase Complete: Data successfully standardized, engineered, merged, and scaled.")

@@ -60,7 +60,9 @@ def validate_telemetry(file_path):
                     # 6. Specific Service Counts (DNS, TLS, QUIC)
                     dst_port = record.get("dst_port", 0)
                     src_port = record.get("src_port", 0)
-                    suricata_events = record.get("suricata_events", [])
+                    
+                    # THE FIX: Cast the ML-safe comma-separated string we created in merge_telemetry.py
+                    suricata_events = str(record.get("suricata_event_types", "")).lower()
                     
                     if dst_port == 53 or src_port == 53 or "dns" in suricata_events:
                         stats["dns_count"] += 1

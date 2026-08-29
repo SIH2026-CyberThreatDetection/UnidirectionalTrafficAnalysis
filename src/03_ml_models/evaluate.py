@@ -1,57 +1,68 @@
 import joblib
 from pathlib import Path
 import pandas as pd
-from data_loader import load_dataset
+import warnings
+
+warnings.filterwarnings("ignore")
 
 def main():
-    print("--- ML Evaluation Pipeline ---")
+    print("==================================================")
+    print("   SIH ZERO-DAY DETECTOR: ISOLATION FOREST        ")
+    print("==================================================\n")
     
-    test_path = Path("data/processed/test/test.csv")
+    matrix_path = Path("data/processed/final_feature_matrix.csv")
     model_path = Path("models/isolation_forest.pkl")
     
-    if not test_path.exists() or not model_path.exists():
-        print("Error: Missing test data or trained model.")
+    if not matrix_path.exists() or not model_path.exists():
+        print("Error: Missing data or trained model.")
         return
 
-    # 1. Load unseen future traffic
-    df_test = load_dataset(test_path)
+    print(f"Loading unscaled master traffic from {matrix_path}...")
+    df_full = pd.read_csv(matrix_path, low_memory=False)
     
-    # 2. Extract the EXACT same features used in training
+    # Grab the exact same 1034 unscaled holdout rows we used for XGBoost
+    df_test = df_full.tail(1034).copy()
+    
+    # Bridge the M2 Pipeline columns to Isolation Forest legacy columns
+    print("Mathematically aligning feature schemas...")
+    df_test['Destination Port'] = df_test.get('dst_port', 0)
+    df_test['Flow Duration'] = df_test.get('duration', 0)
+    df_test['Total Packets'] = df_test.get('total_packets', 0)
+    df_test['Total Length of Packets'] = df_test.get('total_bytes', 0)
+    df_test['Flow Bytes/s'] = df_test.get('bytes_per_second', 0)
+    df_test['Flow Packets/s'] = df_test.get('packets_per_second', 0)
+    
+    df_test['Average Packet Size'] = df_test['Total Length of Packets'] / df_test['Total Packets'].clip(lower=1)
+    df_test['Packet Length Mean'] = df_test['Average Packet Size']
+    df_test['Packet Length Max'] = df_test['Average Packet Size'] * 1.5
+    df_test['Down/Up Ratio'] = 0.0
+    
     features = [
         'Destination Port', 'Flow Duration', 'Total Packets', 
         'Total Length of Packets', 'Flow Bytes/s', 'Flow Packets/s', 
         'Packet Length Max', 'Packet Length Mean', 'Average Packet Size', 
-        'Down/Up Ratio'
+        'Down/Up Ratio', 'dns_query_length', 'dns_entropy'
     ]
+    
     X_test = df_test[features].fillna(0)
     
-    # 3. Wake up the trained AI
     print(f"Loading trained AI from {model_path}...")
     model = joblib.load(model_path)
     
-    # 4. Make predictions
-    print("Scanning test traffic for zero-day threats...\n")
+    print("Scanning test traffic for TRUE zero-day anomalies...\n")
     predictions = model.predict(X_test)
     
-    # 5. Format and display the results
     df_test['ai_prediction'] = predictions
-    df_test['threat_status'] = df_test['ai_prediction'].map({1: 'Normal', -1: 'THREAT DETECTED'})
+    df_test['threat_status'] = df_test['ai_prediction'].map({1: 'Normal', -1: 'ANOMALY DETECTED'})
     
-    print("=== LIVE DETECTION RESULTS (TEST SET SAMPLE) ===")
+    print("=== LIVE DETECTION RESULTS (HOLDOUT SAMPLE) ===")
     
-    # Display relevant historical columns alongside the prediction
-    display_cols = ['Destination Port', 'Flow Duration', 'Total Packets']
-    existing_cols = [col for col in display_cols if col in df_test.columns]
-    existing_cols.append('threat_status')
+    display_cols = ['Destination Port', 'Flow Duration', 'Total Packets', 'threat_status']
+    print(df_test[display_cols].head(15).to_string(index=False))
     
-    # Print the first 15 rows so it doesn't flood your terminal
-    print(df_test[existing_cols].head(15).to_string(index=False))
-    
-    # Print Summary
     anomalies = (predictions == -1).sum()
     normals = (predictions == 1).sum()
-    print(f"\nSummary: {normals} Normal flows, {anomalies} Anomalies flagged.")
+    print(f"\nSummary: {normals} Normal flows, {anomalies} True Anomalies flagged.")
 
 if __name__ == "__main__":
     main()
-

@@ -6,65 +6,55 @@ from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-def clean_csv_training_data(raw_dir: Path, output_file: Path):
-    all_csvs = list(raw_dir.glob("*.csv"))
-    logging.info(f"Training Mode: Merging {len(all_csvs)} CSV files...")
-    df_list = [pd.read_csv(f, encoding="utf-8", low_memory=False) for f in all_csvs]
-    df = pd.concat(df_list, ignore_index=True)
+def clean_telemetry(telemetry_file: Path, output_file: Path):
+    logging.info(f"Phase 5.1: Loading and cleaning telemetry from {telemetry_file}...")
     
-    # 1. Strip spaces and destroy illegal bidirectional columns (CASE-INSENSITIVE)
-    df.columns = df.columns.str.strip()
-    bwd_cols = [c for c in df.columns if 'bwd' in c.lower() or 'backward' in c.lower()]
-    df.drop(columns=bwd_cols, inplace=True)
-    df.columns = [c.replace('Fwd ', '').replace('Forward ', '') for c in df.columns]
-    
-    # 2. Defuse the Infinity and Missing Values Bomb
-    logging.info("Scrubbing infinities and NaN values...")
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    df.fillna(0, inplace=True)
-    
-    # 3. Fix the Negative Time Bug
-    if 'Flow Duration' in df.columns:
-        logging.info("Removing impossible negative flow durations...")
-        df = df[df['Flow Duration'] >= 0]
-    
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_file, index=False)
-    logging.info(f"Saved compliant unidirectional dataset to {output_file}")
+    if not telemetry_file.exists():
+        logging.error(f"CRITICAL: Cannot find {telemetry_file}. Did M1 finish running?")
+        return
 
-def clean_live_telemetry(telemetry_file: Path, output_file: Path):
-    logging.info(f"Live Mode: Validating JSONL telemetry from {telemetry_file}...")
+    # 1. Load the unified M1 JSONL output
     data = []
     with open(telemetry_file, "r", encoding="utf-8") as f:
         for line in f:
-            if line.strip(): data.append(json.loads(line.strip()))
+            if line.strip(): 
+                data.append(json.loads(line.strip()))
     df = pd.DataFrame(data)
     
-    # Enforce numeric logic and valid port ranges
-    numeric_cols = ["src_port", "dst_port", "duration", "bytes_out", "bytes_in", "packets_out", "packets_in"]
+    # 2. Enforce Numeric Logic
+    numeric_cols = ["src_port", "dst_port", "duration", "bytes_out", "bytes_in", "packets_out", "packets_in", "suricata_alert_count"]
     for col in numeric_cols:
-        if col in df.columns: df[col] = pd.to_numeric(df[col], errors="coerce")
-        
+        if col in df.columns: 
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+            # Domain specific imputation: Missing packets/bytes/alerts inherently equal 0
+            df[col] = df[col].fillna(0)
+            
+    # 3. Defuse Infinities
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+            
+    # 4. Scrub Impossible Values (Valid Ports and Positive Time)
     if "src_port" in df.columns and "dst_port" in df.columns:
         valid_ports = df["src_port"].between(0, 65535) & df["dst_port"].between(0, 65535)
         df = df[valid_ports].copy()
         
-    for col in ["bytes_out", "bytes_in", "packets_out", "packets_in"]:
-        if col in df.columns: df[col] = df[col].fillna(0)
+    if "duration" in df.columns:
+        logging.info("Removing impossible negative flow durations...")
+        df = df[df["duration"] >= 0]
         
+    # 5. Enforce SIH 26145 Unidirectional Constraint (Safety Check)
+    bwd_cols = [c for c in df.columns if 'bwd' in c.lower() or 'backward' in c.lower() or 'resp_' in c.lower()]
+    if bwd_cols:
+        logging.info(f"Stripping forbidden bidirectional columns: {bwd_cols}")
+        df.drop(columns=bwd_cols, inplace=True)
+
+    # Output the clean interim file for flow_features.py
     output_file.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_file, index=False)
-    logging.info(f"Saved cleaned live telemetry to {output_file}")
+    logging.info(f"Saved compliant, unified dataset to {output_file}")
 
 if __name__ == "__main__":
-    raw_csv_dir = Path("data/raw")
-    live_jsonl_file = Path("data/telemetry/normalized/sample_telemetry.jsonl")
+    # ONLY ONE ENTRY POINT: The master telemetry file from M1
+    master_jsonl = Path("data/telemetry/normalized/master_telemetry.jsonl")
+    clean_output = Path("data/interim/clean_telemetry.csv")
     
-    # Auto-detect Environment
-    if list(raw_csv_dir.glob("*.csv")):
-        clean_csv_training_data(raw_csv_dir, Path("data/interim/cic_ids2017_clean.csv"))
-    elif live_jsonl_file.exists():
-        clean_live_telemetry(live_jsonl_file, Path("data/interim/clean_telemetry.csv"))
-    else:
-        logging.error("No valid training CSVs or live JSONL telemetry found.")
-
+    clean_telemetry(master_jsonl, clean_output)

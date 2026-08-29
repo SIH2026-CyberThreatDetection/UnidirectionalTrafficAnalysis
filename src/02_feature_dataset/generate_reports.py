@@ -8,8 +8,8 @@ def generate_dataset_profile():
     """Generates Phase 6 automated dataset and feature profiles."""
     logging.info("Generating Phase 6 Dataset & Split Reports...")
     
-    # Updated to point to our new Hackathon-compliant dataset
-    final_path = Path("data/interim/cic_ids2017_clean.csv")
+    # Correctly pointed to the final advanced feature matrix
+    final_path = Path("data/processed/final_feature_matrix.csv")
     train_path = Path("data/processed/train/train.csv")
     val_path = Path("data/processed/val/val.csv")
     test_path = Path("data/processed/test/test.csv")

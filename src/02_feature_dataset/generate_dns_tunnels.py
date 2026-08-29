@@ -11,7 +11,7 @@ def shannon_entropy(data: str) -> float:
     for x in set(data):
         p_x = float(data.count(x)) / len(data)
         entropy += - p_x * math.log(p_x, 2)
-    return entropy
+    return round(entropy, 4)
 
 def generate_dns_tunneling_traffic(num_samples=10000):
     print(f"Generating {num_samples} synthetic unidirectional DNS flows...")
@@ -30,40 +30,45 @@ def generate_dns_tunneling_traffic(num_samples=10000):
             subdomain = ''.join(random.choice(chars) for _ in range(payload_length))
             domain = f"{subdomain}.evil-c2.net"
             
-            # Malicious unidirectional flow characteristics (high volume, high entropy)
-            flow = {
-                'Destination Port': 53,
-                'Flow Duration': random.randint(10, 5000), # Very fast beaconing
-                'Total Packets': random.randint(10, 100),
-                'Total Length of Packets': random.randint(1500, 8000), # Heavy TXT records
-                'Flow Bytes/s': random.uniform(10000, 50000),
-                'Flow Packets/s': random.uniform(100, 500),
-                'Packet Length Max': random.randint(300, 512),
-                'Packet Length Mean': random.uniform(200, 400),
-                'Average Packet Size': random.uniform(200, 400),
-                'Down/Up Ratio': 0, # Strictly unidirectional requirement
-                'dns_query_length': len(domain),
-                'dns_entropy': shannon_entropy(domain),
-                'is_attack': 1
-            }
+            # Unidirectional attack profile (Outbound beaconing)
+            duration = random.uniform(0.01, 2.0)
+            bytes_out = random.randint(1500, 8000)
+            packets_out = random.randint(10, 100)
+            
         else:
             # Normal DNS resolution
             domain = random.choice(normal_domains)
-            flow = {
-                'Destination Port': 53,
-                'Flow Duration': random.randint(5000, 200000),
-                'Total Packets': random.randint(1, 4),
-                'Total Length of Packets': random.randint(40, 250),
-                'Flow Bytes/s': random.uniform(10, 500),
-                'Flow Packets/s': random.uniform(1, 10),
-                'Packet Length Max': random.randint(50, 120),
-                'Packet Length Mean': random.uniform(30, 80),
-                'Average Packet Size': random.uniform(30, 80),
-                'Down/Up Ratio': 0,
-                'dns_query_length': len(domain),
-                'dns_entropy': shannon_entropy(domain),
-                'is_attack': 0
-            }
+            duration = random.uniform(0.05, 5.0)
+            bytes_out = random.randint(40, 250)
+            packets_out = random.randint(1, 4)
+            
+        # Build the flow using the EXACT schema from our M2 pipeline
+        flow = {
+            'dst_port': 53,
+            'duration': duration,
+            'bytes_out': bytes_out,
+            'bytes_in': 0,  # Unidirectional constraint
+            'packets_out': packets_out,
+            'packets_in': 0,
+            
+            # Engineered ratios from flow_features.py
+            'total_bytes': bytes_out,
+            'total_packets': packets_out,
+            'byte_ratio': round((bytes_out + 1) / 1.0, 4), 
+            'packet_ratio': round((packets_out + 1) / 1.0, 4),
+            'bytes_per_second': round(bytes_out / max(duration, 1e-6), 4),
+            'packets_per_second': round(packets_out / max(duration, 1e-6), 4),
+            
+            # DNS and TLS specific features
+            'dns_query_length': len(domain),
+            'dns_entropy': shannon_entropy(domain),
+            'is_encrypted': 0, # DNS over UDP is plaintext
+            'uses_deprecated_crypto': 0,
+            
+            # The Target Label for XGBoost
+            'is_attack': is_malicious
+        }
+        
         data.append(flow)
         
     df = pd.DataFrame(data)

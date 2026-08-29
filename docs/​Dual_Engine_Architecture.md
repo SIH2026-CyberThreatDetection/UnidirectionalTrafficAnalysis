@@ -1,6 +1,5 @@
 # Technical Build Report: SIH 2026 Dual-Engine AI (PS 26145)
 **Date:** August 28, 2026  
-**Project Lead:** Reaper  
 **Objective:** Develop a fully SIH-compliant, metadata-only threat detection pipeline capable of identifying 6 specific attack categories without payload decryption.
 
 ## 1. Feature Engineering Pipeline (`src/02_feature_dataset`)
