@@ -1,52 +1,148 @@
 import json
+import logging
 import os
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: %(message)s"
+)
+
+
 def normalize_suricata(raw_file, output_file):
+
+    logging.info("=" * 60)
+    logging.info("SURICATA TELEMETRY NORMALIZATION")
+    logging.info("=" * 60)
+
+    if not os.path.exists(raw_file):
+        logging.error(
+            "Suricata file not found: %s",
+            raw_file
+        )
+        return False
+
+    output_parent = os.path.dirname(output_file)
+
+    if output_parent:
+        os.makedirs(
+            output_parent,
+            exist_ok=True
+        )
+
     count = 0
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    
-    with open(raw_file, 'r') as infile, open(output_file, 'w') as outfile:
-        for line in infile:
+    skipped = 0
+
+    with open(
+        raw_file,
+        "r",
+        encoding="utf-8",
+        errors="ignore"
+    ) as infile, open(
+        output_file,
+        "w",
+        encoding="utf-8"
+    ) as outfile:
+
+        for line_number, line in enumerate(
+            infile,
+            start=1
+        ):
+
             if not line.strip():
                 continue
+
             try:
-                raw_event = json.loads(line)
-                
-                # We only care about network events with IPs (skip internal engine logs)
-                if "src_ip" not in raw_event or "dest_ip" not in raw_event:
-                    continue
-                    
-                # Build the normalized record matching your AI schema
-                normalized_record = {
-                    "timestamp": raw_event.get("timestamp"),
-                    "flow_id": str(raw_event.get("flow_id", "")),
-                    "src_ip": raw_event.get("src_ip"),
-                    "src_port": raw_event.get("src_port", 0),
-                    "dst_ip": raw_event.get("dest_ip"),  
-                    "dst_port": raw_event.get("dest_port", 0),
-                    "protocol": raw_event.get("proto", "UNKNOWN"),
-                    "event_type": raw_event.get("event_type", "unknown"),
-                    "sensor": "suricata",
-                    "sensor_version": "suricata-8.0.6"
-                }
-                
-                # THE FIX: Extract actual Threat Intelligence if Suricata triggered an alarm
-                if raw_event.get("event_type") == "alert" and "alert" in raw_event:
-                    normalized_record["alert_signature"] = raw_event["alert"].get("signature", "unknown")
-                    normalized_record["alert_category"] = raw_event["alert"].get("category", "unknown")
-                    normalized_record["alert_severity"] = raw_event["alert"].get("severity", 3)
-                
-                outfile.write(json.dumps(normalized_record) + "\n")
-                count += 1
-                
-            except Exception as e:
-                print(f"Error parsing line: {e}")
+                raw = json.loads(line)
+
+            except json.JSONDecodeError:
+                skipped += 1
                 continue
-                
-    print(f"Successfully normalized {count} Suricata events to {output_file}")
+
+            src_ip = raw.get("src_ip")
+            dst_ip = raw.get("dest_ip")
+
+            if not src_ip or not dst_ip:
+                skipped += 1
+                continue
+
+            alert = raw.get("alert")
+
+            if not isinstance(alert, dict):
+                alert = {}
+
+            normalized = {
+                "timestamp": raw.get("timestamp"),
+
+                "flow_id": str(
+                    raw.get("flow_id", "")
+                ),
+
+                "src_ip": src_ip,
+                "src_port": raw.get(
+                    "src_port",
+                    0
+                ),
+
+                "dst_ip": dst_ip,
+                "dst_port": raw.get(
+                    "dest_port",
+                    0
+                ),
+
+                "protocol": str(
+                    raw.get(
+                        "proto",
+                        "UNKNOWN"
+                    )
+                ).upper(),
+
+                "event_type": raw.get(
+                    "event_type",
+                    "unknown"
+                ),
+
+                "sensor": "suricata",
+                "sensor_version": "suricata-8.0.6",
+
+                "alert_signature": alert.get(
+                    "signature"
+                ),
+
+                "alert_category": alert.get(
+                    "category"
+                ),
+
+                "alert_severity": alert.get(
+                    "severity"
+                )
+            }
+
+            outfile.write(
+                json.dumps(
+                    normalized,
+                    separators=(",", ":")
+                ) + "\n"
+            )
+
+            count += 1
+
+    logging.info(
+        "Normalized events: %d",
+        count
+    )
+
+    logging.info(
+        "Skipped events: %d",
+        skipped
+    )
+
+    return True
+
 
 if __name__ == "__main__":
-    raw_path = "data/telemetry/raw/suricata/sample/eve.json"
-    out_path = "data/telemetry/normalized/suricata_normalized.jsonl"
-    normalize_suricata(raw_path, out_path)
 
+    normalize_suricata(
+        "data/telemetry/raw/suricata/sample/eve.json",
+        "data/telemetry/normalized/suricata_normalized.jsonl"
+    )

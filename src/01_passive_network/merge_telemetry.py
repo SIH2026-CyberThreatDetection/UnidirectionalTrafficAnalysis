@@ -1,79 +1,319 @@
 import json
+import logging
 import os
+from datetime import datetime
 
-def generate_key(record):
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: %(message)s"
+)
+
+
+def parse_time(value):
+    if not value:
+        return None
+
+    try:
+        return datetime.fromisoformat(
+            str(value).replace(
+                "Z",
+                "+00:00"
+            )
+        )
+    except ValueError:
+        return None
+
+
+def flow_key(record):
     """
-    Forces strings and lowercase protocol.
-    Extracts a coarse timestamp (YYYY-MM-DDTHH:MM) to prevent 5-tuple collisions
-    when source ports are reused later in the day.
+    Stable directional flow key.
+
+    flow_id is preferred because it is unique inside
+    the originating sensor.
     """
-    src = str(record.get('src_ip', ''))
-    dst = str(record.get('dst_ip', ''))
-    s_port = str(record.get('src_port', '0'))
-    d_port = str(record.get('dst_port', '0'))
-    proto = str(record.get('protocol', '')).lower()
-    
-    # Extract the timestamp down to the minute to isolate the flow in time
-    # e.g., "2017-07-07T12:01:58..." becomes "2017-07-07T12:01"
-    raw_ts = str(record.get('timestamp', '1970-01-01T00:00'))
-    time_boundary = raw_ts[:16] 
-    
-    return f"{src}-{dst}-{s_port}-{d_port}-{proto}-{time_boundary}"
 
-def merge_telemetry(zeek_file, suricata_file, output_file):
-    merged_data = {}
-    
-    print("Reading Zeek baseline...")
-    with open(zeek_file, 'r') as f:
-        for line in f:
-            if not line.strip(): continue
-            record = json.loads(line)
-            key = generate_key(record)
-            
-            # Initialize ML-safe numeric features for Suricata intelligence
-            record['suricata_alert_count'] = 0
-            record['has_suricata_alert'] = 0
-            
-            merged_data[key] = record
+    flow_id = record.get("flow_id")
 
-    print("Enriching with Suricata intelligence...")
-    suricata_count = 0
-    with open(suricata_file, 'r') as f:
-        for line in f:
-            if not line.strip(): continue
-            record = json.loads(line)
-            key = generate_key(record)
-            
-            if key in merged_data:
-                # Increment the alert count for XGBoost to use as a numeric feature
-                merged_data[key]['suricata_alert_count'] += 1
-                merged_data[key]['has_suricata_alert'] = 1
-                suricata_count += 1
-                
-                # Optional: If you strictly need the event types for M4 (not for ML),
-                # combine them as a single comma-separated string, not a list.
-                event = str(record.get('event_type', ''))
-                if event:
-                    existing_events = merged_data[key].get('suricata_event_types', '')
-                    if event not in existing_events:
-                        if existing_events:
-                            merged_data[key]['suricata_event_types'] += f",{event}"
-                        else:
-                            merged_data[key]['suricata_event_types'] = event
+    if flow_id:
+        return (
+            str(record.get("sensor", "")),
+            str(flow_id)
+        )
 
-    print(f"Writing unified dataset to {output_file}...")
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, 'w') as f:
-        for record in merged_data.values():
-            f.write(json.dumps(record) + "\n")
-            
-    print("-" * 40)
-    print(f"SUCCESS: Created {len(merged_data)} unified Super Records!")
-    print(f"SUCCESS: Enriched {suricata_count} flows with deep packet inspection.")
+    return (
+        str(record.get("src_ip", "")),
+        str(record.get("dst_ip", "")),
+        str(record.get("src_port", "")),
+        str(record.get("dst_port", "")),
+        str(record.get("protocol", "")).upper(),
+        str(record.get("timestamp", ""))
+    )
+
+
+def initialize_suricata_fields(record):
+
+    record["suricata_alert_count"] = 0
+    record["has_suricata_alert"] = 0
+    record["suricata_event_types"] = ""
+    record["alert_severity"] = 0
+
+    return record
+
+
+def merge_telemetry(
+    zeek_file,
+    suricata_file,
+    output_file
+):
+
+    logging.info("=" * 60)
+    logging.info("MERGING ZEEK + SURICATA TELEMETRY")
+    logging.info("=" * 60)
+
+    if not os.path.exists(zeek_file):
+        logging.error(
+            "Zeek file not found: %s",
+            zeek_file
+        )
+        return False
+
+    if not os.path.exists(suricata_file):
+        logging.error(
+            "Suricata file not found: %s",
+            suricata_file
+        )
+        return False
+
+    merged = {}
+
+    with open(
+        zeek_file,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        for line in file:
+
+            if not line.strip():
+                continue
+
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            record = initialize_suricata_fields(
+                record
+            )
+
+            key = flow_key(record)
+
+            # Never silently overwrite a flow.
+            if key in merged:
+                logging.warning(
+                    "Duplicate Zeek key encountered: %s",
+                    key
+                )
+                continue
+
+            merged[key] = record
+
+    logging.info(
+        "Zeek flows loaded: %d",
+        len(merged)
+    )
+
+    matches = 0
+
+    with open(
+        suricata_file,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        for line in file:
+
+            if not line.strip():
+                continue
+
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            # Suricata flow_id is not necessarily equal
+            # to Zeek UID, therefore use directional metadata.
+            candidate_keys = [
+                key
+                for key, value in merged.items()
+                if (
+                    value.get("src_ip") == record.get("src_ip")
+                    and
+                    value.get("dst_ip") == record.get("dst_ip")
+                    and
+                    int(value.get("src_port") or 0)
+                    == int(record.get("src_port") or 0)
+                    and
+                    int(value.get("dst_port") or 0)
+                    == int(record.get("dst_port") or 0)
+                    and
+                    str(value.get("protocol", "")).upper()
+                    ==
+                    str(record.get("protocol", "")).upper()
+                )
+            ]
+
+            if not candidate_keys:
+                continue
+
+            # Match the closest timestamp when available.
+            suri_time = parse_time(
+                record.get("timestamp")
+            )
+
+            best_key = candidate_keys[0]
+            best_delta = None
+
+            if suri_time:
+
+                for key in candidate_keys:
+
+                    zeek_time = parse_time(
+                        merged[key].get("timestamp")
+                    )
+
+                    if not zeek_time:
+                        continue
+
+                    delta = abs(
+                        (
+                            zeek_time - suri_time
+                        ).total_seconds()
+                    )
+
+                    if (
+                        best_delta is None
+                        or delta < best_delta
+                    ):
+                        best_delta = delta
+                        best_key = key
+
+            # Avoid matching completely unrelated traffic.
+            if (
+                best_delta is not None
+                and best_delta > 5
+            ):
+                continue
+
+            target = merged[best_key]
+
+            target[
+                "suricata_alert_count"
+            ] += 1
+
+            target[
+                "has_suricata_alert"
+            ] = 1
+
+            event_type = str(
+                record.get(
+                    "event_type",
+                    ""
+                )
+            ).strip()
+
+            existing = [
+                x
+                for x in str(
+                    target.get(
+                        "suricata_event_types",
+                        ""
+                    )
+                ).split(",")
+                if x
+            ]
+
+            if (
+                event_type
+                and event_type not in existing
+            ):
+                existing.append(
+                    event_type
+                )
+
+            target[
+                "suricata_event_types"
+            ] = ",".join(existing)
+
+            severity = record.get(
+                "alert_severity"
+            )
+
+            try:
+                severity = int(severity)
+            except (ValueError, TypeError):
+                severity = 0
+
+            target[
+                "alert_severity"
+            ] = max(
+                target.get(
+                    "alert_severity",
+                    0
+                ),
+                severity
+            )
+
+            matches += 1
+
+    output_parent = os.path.dirname(
+        output_file
+    )
+
+    if output_parent:
+        os.makedirs(
+            output_parent,
+            exist_ok=True
+        )
+
+    with open(
+        output_file,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        for record in merged.values():
+
+            file.write(
+                json.dumps(
+                    record,
+                    separators=(",", ":")
+                ) + "\n"
+            )
+
+    logging.info(
+        "Unified records: %d",
+        len(merged)
+    )
+
+    logging.info(
+        "Suricata matched flows: %d",
+        matches
+    )
+
+    logging.info(
+        "Output: %s",
+        output_file
+    )
+
+    return True
+
 
 if __name__ == "__main__":
-    zeek_path = "data/telemetry/normalized/normalized_telemetry.jsonl"
-    suricata_path = "data/telemetry/normalized/suricata_normalized.jsonl"
-    master_path = "data/telemetry/normalized/master_telemetry.jsonl"
-    
-    merge_telemetry(zeek_path, suricata_path, master_path)
+
+    merge_telemetry(
+        "data/telemetry/normalized/normalized_telemetry.jsonl",
+        "data/telemetry/normalized/suricata_normalized.jsonl",
+        "data/telemetry/normalized/master_telemetry.jsonl"
+    )

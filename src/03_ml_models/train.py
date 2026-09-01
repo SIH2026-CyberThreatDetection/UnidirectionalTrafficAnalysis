@@ -1,38 +1,117 @@
 import joblib
-import pandas as pd
+import logging
 from pathlib import Path
-from data_loader import load_dataset
-from anomaly_detector import build_anomaly_detector
 
-# Point to the newly fused master dataset
-TRAIN_PATH = Path("data/processed/train/master_train.csv")
-MODEL_OUT = Path("models/isolation_forest.pkl")
+from anomaly_detector import build_anomaly_detector
+from classifier import build_baseline_classifier
+from data_loader import load_dataset
+from schema_validator import validate_columns
+from preprocessing import transform_features
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: %(message)s"
+)
+
+
+TRAIN_PATH = Path(
+    "data/processed/train/train.csv"
+)
+
+FEATURES = joblib.load(
+    "models/preprocessing/"
+    "preprocessing_contract.pkl"
+)["feature_order"]
+
 
 def main():
-    print("ML training pipeline initialized.")
-    print(f"Expected data: {TRAIN_PATH}")
-    
-    df = load_dataset(TRAIN_PATH)
-    
-    # The 10 core volumetric features + 2 new synthetic DNS features
-    features = [
-        'Destination Port', 'Flow Duration', 'Total Packets', 
-        'Total Length of Packets', 'Flow Bytes/s', 'Flow Packets/s', 
-        'Packet Length Max', 'Packet Length Mean', 'Average Packet Size', 
-        'Down/Up Ratio', 'dns_query_length', 'dns_entropy'
-    ]
-    
-    X_train = df[features].fillna(0)
-    
-    print("Building Multi-Vector Anomaly Detector...")
-    model = build_anomaly_detector()
-    
-    print(f"Training model on {len(X_train)} combined rows (This might take a minute)...")
-    model.fit(X_train)
-    
-    MODEL_OUT.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODEL_OUT)
-    print(f"Upgraded model successfully trained and saved to {MODEL_OUT}")
+
+    df = load_dataset(
+        TRAIN_PATH
+    )
+
+    validate_columns(
+        df,
+        FEATURES + [
+            "is_attack"
+        ]
+    )
+
+    X = transform_features(
+        df
+    )
+
+    y = df[
+        "is_attack"
+    ].astype(int)
+
+    model_dir = Path(
+        "models"
+    )
+
+    model_dir.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    # ---------------------------------------------------------
+    # Isolation Forest
+    # ---------------------------------------------------------
+
+    logging.info(
+        "Training Isolation Forest..."
+    )
+
+    isolation_forest = (
+        build_anomaly_detector()
+    )
+
+    isolation_forest.fit(
+        X
+    )
+
+    joblib.dump(
+        isolation_forest,
+        model_dir /
+        "isolation_forest.pkl"
+    )
+
+    # ---------------------------------------------------------
+    # Random Forest
+    # ---------------------------------------------------------
+
+    logging.info(
+        "Training Random Forest..."
+    )
+
+    random_forest = (
+        build_baseline_classifier()
+    )
+
+    random_forest.fit(
+        X,
+        y
+    )
+
+    joblib.dump(
+        random_forest,
+        model_dir /
+        "random_forest.pkl"
+    )
+
+    logging.info(
+        "Isolation Forest saved."
+    )
+
+    logging.info(
+        "Random Forest saved."
+    )
+
+    print(
+        "\nM3 baseline training complete."
+    )
+
 
 if __name__ == "__main__":
     main()

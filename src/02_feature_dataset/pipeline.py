@@ -1,49 +1,128 @@
-import subprocess
 import logging
+import subprocess
 import sys
-from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-def run_script(script_path):
-    """Runs a Python script and outputs its logs to the terminal."""
-    logging.info(f"========== Executing {script_path} ==========")
-    result = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
-    
-    # Print the standard output and standard error so you can see exactly what the scripts are doing
-    if result.stdout:
-        print(result.stdout.strip())
-    if result.stderr:
-        print(result.stderr.strip())
-        
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s: %(message)s"
+)
+
+
+SCRIPTS = [
+    (
+        "src/02_feature_dataset/clean.py",
+        "Clean telemetry"
+    ),
+
+    (
+        "src/02_feature_dataset/flow_features.py",
+        "Generate flow features"
+    ),
+
+    (
+        "src/02_feature_dataset/dns_features.py",
+        "Generate DNS features"
+    ),
+
+    (
+        "src/02_feature_dataset/tls_features.py",
+        "Generate TLS features"
+    ),
+
+    (
+        "src/02_feature_dataset/generate_dns_tunnels.py",
+        "Generate synthetic DNS scenario"
+    ),
+
+    (
+        "src/02_feature_dataset/merge_datasets.py",
+        "Merge historical + synthetic data"
+    ),
+
+    (
+        "src/02_feature_dataset/split.py",
+        "Chronological split + training-only preprocessing"
+    ),
+
+    (
+        "src/02_feature_dataset/generate_reports.py",
+        "Generate reports"
+    )
+]
+
+
+def run_script(path):
+
+    logging.info(
+        "Running: %s",
+        path
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            path
+        ],
+        text=True
+    )
+
     if result.returncode != 0:
-        logging.error(f"CRITICAL: Pipeline FAILED at {script_path}")
+
+        logging.error(
+            "FAILED: %s",
+            path
+        )
+
         return False
-        
+
+    logging.info(
+        "COMPLETED: %s",
+        path
+    )
+
     return True
 
+
+def run_pipeline():
+
+    print("=" * 70)
+    print(
+        "M2 FEATURE + DATASET PIPELINE"
+    )
+    print("=" * 70)
+
+    for script, description in SCRIPTS:
+
+        print()
+        print(
+            f">>> {description}"
+        )
+
+        if not run_script(script):
+
+            print()
+            print(
+                "M2 PIPELINE STOPPED"
+            )
+
+            print(
+                f"Failed step: {script}"
+            )
+
+            return False
+
+    print()
+    print("=" * 70)
+    print(
+        "M2 COMPLETE"
+    )
+    print("=" * 70)
+
+    return True
+
+
 if __name__ == "__main__":
-    print("===================================================")
-    print("   UNIFIED M2 FEATURE PIPELINE (STRICT PARITY)     ")
-    print("===================================================")
-    
-    # NO AUTO-DETECT VIRUS.
-    # The pipeline strictly enforces that all data goes through the 
-    # exact same mathematical extraction, merging, and scaling.
-    
-    scripts_in_order = [
-        "src/02_feature_dataset/clean.py",              # 1. Enforce data types and SIH constraints
-        "src/02_feature_dataset/flow_features.py",      # 2. Ratios & Rates
-        "src/02_feature_dataset/dns_features.py",       # 3. DNS Entropy
-        "src/02_feature_dataset/tls_features.py",       # 4. SNI Entropy & Deprecated Crypto
-        "src/02_feature_dataset/merge_datasets.py",     # 5. Inject synthetic attacks BEFORE scaling
-        "src/02_feature_dataset/split.py",              # 6. Time-Aware Split & Scaler Fit
-        "src/02_feature_dataset/generate_reports.py"    # 7. Auto-generate Markdown for judges
-    ]
-    
-    for script in scripts_in_order:
-        success = run_script(script)
-        if not success:
-            sys.exit(1)
-            
-    logging.info("M2 Phase Complete: Data successfully standardized, engineered, merged, and scaled.")
+
+    if not run_pipeline():
+        raise SystemExit(1)

@@ -1,0 +1,16 @@
+[
+  "duration",
+  "total_bytes",
+  "total_packets",
+  "bytes_per_second",
+  "packets_per_second",
+  "bytes_per_packet",
+  "byte_ratio",
+  "packet_ratio",
+  "outbound_fraction",
+  "dns_query_length",
+  "dns_entropy",
+  "dns_digit_fraction",
+  "dns_subdomain_depth",
+  "sni_entropy"
+]

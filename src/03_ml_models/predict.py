@@ -1,85 +1,243 @@
-import pandas as pd
-import joblib
-import warnings
 import json
-import numpy as np
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Suppress sklearn warnings for clean terminal output
-warnings.filterwarnings("ignore")
+import joblib
+import numpy as np
+import pandas as pd
 
-def run_m4_json_terminal():
-    print("===================================================")
-    print("   NTRO 26145: M4 JSON PREDICTION STREAM ACTIVE    ")
-    print("===================================================\n")
-    
-    iso_forest = joblib.load("models/isolation_forest.pkl")
-    xgboost_model = joblib.load("models/xgboost_classifier.pkl")
-    
-    # Map the AI's integer output back to the SIH text strings
-    target_names = {
-        0: "benign",
-        1: "ddos",
-        2: "botnet_c2",
-        3: "dns_tunneling",
-        4: "encrypted_malware",
-        5: "reconnaissance",
-        6: "data_exfiltration"
-    }
-    
-    features = [
-        'Destination Port', 'Flow Duration', 'Total Packets', 
-        'Total Length of Packets', 'Flow Bytes/s', 'Flow Packets/s', 
-        'Packet Length Max', 'Packet Length Mean', 'Average Packet Size', 
-        'Down/Up Ratio', 'dns_query_length', 'dns_entropy'
+from preprocessing import transform_features
+
+
+TARGET_NAMES = {
+    0: "benign",
+    1: "ddos",
+    2: "botnet_c2",
+    3: "dns_tunneling",
+    4: "encrypted_malware",
+    5: "reconnaissance",
+    6: "data_exfiltration"
+}
+
+
+def predict_dataframe(
+    df: pd.DataFrame
+):
+
+    iso_model = joblib.load(
+        "models/isolation_forest.pkl"
+    )
+
+    rf_model = joblib.load(
+        "models/random_forest.pkl"
+    )
+
+    xgb_artifact = joblib.load(
+        "models/xgboost_classifier.pkl"
+    )
+
+    xgb_model = xgb_artifact[
+        "model"
     ]
-    
-    live_traffic = pd.DataFrame([
-        [443, 50000, 10, 5000, 100000.0, 200.0, 1200, 500.0, 550.0, 1.0, 0, 0.0],          # Normal
-        [80, 1000, 5000, 250000, 250000000.0, 5000000.0, 50, 50.0, 50.0, 0.0, 0, 0.0],       # DDoS
-        [22, 200000, 50, 4000, 20000.0, 250.0, 80, 80.0, 80.0, 0.5, 0, 0.0],                 # Brute Force (Encrypted Malware)
-        [53, 15000, 4, 600, 40000.0, 266.6, 300, 150.0, 175.0, 1.0, 185, 4.2],               # DNS Tunneling
-        [4444, 800000, 15, 950000, 1187500.0, 18.7, 65000, 63000.0, 64000.0, 0.1, 0, 0.0]    # Unknown Zero-Day
-    ], columns=features)
-    
-    for i, (index, row) in enumerate(live_traffic.iterrows()):
-        flow_data = pd.DataFrame([row])
-        port = int(row['Destination Port'])
-        
-        # Engine 1: Anomaly Detection
-        is_anomaly = iso_forest.predict(flow_data)[0] == -1
-        
-        # Engine 2: Multiclass Classification & Confidence Scoring
-        xgboost_probs = xgboost_model.predict_proba(flow_data)[0]
-        xgboost_pred_idx = int(np.argmax(xgboost_probs))
-        confidence = float(xgboost_probs[xgboost_pred_idx])
-        
-        threat_class = target_names[xgboost_pred_idx]
-        
-        # Dual-Engine Logic: If XGBoost misses it but IsoForest catches it
-        if is_anomaly and xgboost_pred_idx == 0:
-            threat_class = "zero_day_anomaly"
-            confidence = 0.8500 # Baseline confidence for mathematical anomalies
-            
-        # Only output alerts for malicious traffic (M4 doesn't need to see normal traffic)
-        if threat_class != "benign":
-            contract = {
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "flow_id": f"192.168.1.100:{port}",
-                "threat_class": threat_class,
-                "confidence": round(confidence, 4),
-                "model_version": "M3-DualEngine-v1.0",
-                "feature_version": "M2-v1.0",
-                "evidence": [
-                    {"feature": "Destination Port", "value": port},
-                    {"feature": "Flow Bytes/s", "value": float(row['Flow Bytes/s'])},
-                    {"feature": "dns_entropy", "value": float(row['dns_entropy'])}
-                ]
-            }
-            
-            # Print the machine-readable JSON object
-            print(json.dumps(contract, indent=2))
+
+    encoded_to_class = {
+        int(k): int(v)
+        for k, v in xgb_artifact[
+            "encoded_to_class"
+        ].items()
+    }
+
+    X = transform_features(
+        df
+    )
+
+    # ---------------------------------------------------------
+    # Engine 1
+    # ---------------------------------------------------------
+
+    anomaly_prediction = (
+        iso_model.predict(X)
+    )
+
+    anomaly_score = (
+        iso_model.decision_function(X)
+    )
+
+    # Normalize anomaly score only for
+    # presentation/fusion. It is NOT a probability.
+    anomaly_signal = (
+        -anomaly_score
+    )
+
+    # ---------------------------------------------------------
+    # Engine 2
+    # ---------------------------------------------------------
+
+    xgb_probabilities = (
+        xgb_model.predict_proba(X)
+    )
+
+    xgb_encoded = (
+        np.argmax(
+            xgb_probabilities,
+            axis=1
+        )
+    )
+
+    xgb_confidence = (
+        np.max(
+            xgb_probabilities,
+            axis=1
+        )
+    )
+
+    xgb_sih_class = [
+        encoded_to_class[
+            int(pred)
+        ]
+        for pred in xgb_encoded
+    ]
+
+    results = []
+
+    for index in range(
+        len(df)
+    ):
+
+        predicted_class = (
+            xgb_sih_class[index]
+        )
+
+        # Dual-engine rule:
+        #
+        # If XGBoost says benign but
+        # Isolation Forest says anomalous,
+        # preserve both pieces of information.
+        #
+        # Do NOT pretend IF knows the attack class.
+
+        if (
+            predicted_class == 0
+            and
+            anomaly_prediction[index] == -1
+        ):
+
+            threat_class = (
+                "zero_day_anomaly"
+            )
+
+        else:
+
+            threat_class = (
+                TARGET_NAMES.get(
+                    predicted_class,
+                    "unknown"
+                )
+            )
+
+        result = {
+
+            "timestamp":
+                datetime.now(
+                    timezone.utc
+                ).isoformat(),
+
+            "flow_id":
+                str(
+                    df.iloc[index]
+                    .get(
+                        "flow_id",
+                        f"flow-{index}"
+                    )
+                ),
+
+            "threat_class":
+                threat_class,
+
+            "classifier_class":
+                TARGET_NAMES.get(
+                    predicted_class,
+                    "unknown"
+                ),
+
+            "classifier_confidence":
+                round(
+                    float(
+                        xgb_confidence[index]
+                    ),
+                    4
+                ),
+
+            "anomaly_score":
+                round(
+                    float(
+                        anomaly_signal[index]
+                    ),
+                    6
+                ),
+
+            "is_anomaly":
+                bool(
+                    anomaly_prediction[index]
+                    == -1
+                ),
+
+            "model_version":
+                "M3-DualEngine-v2.0",
+
+            "feature_version":
+                "M2-v2.0"
+        }
+
+        results.append(
+            result
+        )
+
+    return results
+
+
+def main():
+
+    print("=" * 60)
+    print(
+        "M3 DUAL-ENGINE PREDICTION"
+    )
+    print("=" * 60)
+
+    test_path = Path(
+        "data/processed/test/test.csv"
+    )
+
+    df = pd.read_csv(
+        test_path,
+        low_memory=False
+    )
+
+    start = time.perf_counter()
+
+    results = predict_dataframe(
+        df.head(20)
+    )
+
+    elapsed = (
+        time.perf_counter()
+        - start
+    )
+
+    print(
+        json.dumps(
+            results,
+            indent=2
+        )
+    )
+
+    print()
+    print(
+        f"Inference time: "
+        f"{elapsed:.6f}s"
+    )
+
 
 if __name__ == "__main__":
-    run_m4_json_terminal()
+    main()

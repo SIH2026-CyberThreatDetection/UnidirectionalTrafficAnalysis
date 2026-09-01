@@ -1,17 +1,37 @@
-import pandas as pd
 from pathlib import Path
 
-def load_dataset(path: str | Path) -> pd.DataFrame:
-    path = Path(path)
-    if not path.exists():
-        raise FileNotFoundError(f"Dataset not found: {path}")
+import pandas as pd
 
-    df = pd.read_csv(path, low_memory=False)
-    print(f"Loaded: {path}")
-    print(f"Rows: {len(df)}")
-    print(f"Columns: {len(df.columns)}")
+
+def load_dataset(
+    path: str | Path
+) -> pd.DataFrame:
+
+    dataset_path = Path(path)
+
+    if not dataset_path.exists():
+        raise FileNotFoundError(
+            f"Dataset not found: "
+            f"{dataset_path}"
+        )
+
+    df = pd.read_csv(
+        dataset_path,
+        low_memory=False
+    )
+
+    if df.empty:
+        raise ValueError(
+            f"Dataset is empty: "
+            f"{dataset_path}"
+        )
+
+    print(
+        f"Loaded: {dataset_path}"
+    )
+
+    print(
+        f"Shape: {df.shape}"
+    )
+
     return df
-
-if __name__ == "__main__":
-    print("Dataset loader module ready.")
-

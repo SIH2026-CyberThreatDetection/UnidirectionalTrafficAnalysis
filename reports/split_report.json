@@ -1,0 +1,151 @@
+{
+  "version": "M2-SPLIT-v3.1",
+  "input_dataset": "data\\processed\\final_feature_matrix.csv",
+  "rows": {
+    "total": 10337,
+    "train": 8269,
+    "validation": 1034,
+    "test": 1034
+  },
+  "features": {
+    "count": 14,
+    "order": [
+      "duration",
+      "total_bytes",
+      "total_packets",
+      "bytes_per_second",
+      "packets_per_second",
+      "bytes_per_packet",
+      "byte_ratio",
+      "packet_ratio",
+      "outbound_fraction",
+      "dns_query_length",
+      "dns_entropy",
+      "dns_digit_fraction",
+      "dns_subdomain_depth",
+      "sni_entropy"
+    ],
+    "continuous": [
+      "duration",
+      "total_bytes",
+      "total_packets",
+      "bytes_per_second",
+      "packets_per_second",
+      "bytes_per_packet",
+      "byte_ratio",
+      "packet_ratio",
+      "outbound_fraction",
+      "dns_query_length",
+      "dns_entropy",
+      "dns_digit_fraction",
+      "dns_subdomain_depth",
+      "sni_entropy"
+    ],
+    "binary": []
+  },
+  "time": {
+    "train": {
+      "start": "2017-07-07 12:01:57.179385+00:00",
+      "end": "2017-07-07 14:15:50.694508+00:00"
+    },
+    "validation": {
+      "start": "2017-07-07 14:15:51.694508+00:00",
+      "end": "2017-07-07 14:33:04.694508+00:00"
+    },
+    "test": {
+      "start": "2017-07-07 14:33:05.694508+00:00",
+      "end": "2017-07-07 14:50:18.694508+00:00"
+    }
+  },
+  "labels": {
+    "overall": {
+      "binary": {
+        "0": 5337,
+        "1": 5000
+      },
+      "multiclass": {
+        "BENIGN": 5337,
+        "DNS_TUNNELING": 5000
+      }
+    },
+    "train": {
+      "binary": {
+        "0": 4303,
+        "1": 3966
+      },
+      "multiclass": {
+        "BENIGN": 4303,
+        "DNS_TUNNELING": 3966
+      }
+    },
+    "validation": {
+      "binary": {
+        "0": 517,
+        "1": 517
+      },
+      "multiclass": {
+        "BENIGN": 517,
+        "DNS_TUNNELING": 517
+      }
+    },
+    "test": {
+      "binary": {
+        "0": 517,
+        "1": 517
+      },
+      "multiclass": {
+        "BENIGN": 517,
+        "DNS_TUNNELING": 517
+      }
+    }
+  },
+  "leakage_audit": {
+    "feature_count": 14,
+    "features": [
+      "duration",
+      "total_bytes",
+      "total_packets",
+      "bytes_per_second",
+      "packets_per_second",
+      "bytes_per_packet",
+      "byte_ratio",
+      "packet_ratio",
+      "outbound_fraction",
+      "dns_query_length",
+      "dns_entropy",
+      "dns_digit_fraction",
+      "dns_subdomain_depth",
+      "sni_entropy"
+    ],
+    "leakage_columns_present_in_features": [],
+    "metadata_columns_excluded": [
+      "Label",
+      "is_attack",
+      "scenario",
+      "source_dataset"
+    ],
+    "passed": true
+  },
+  "preprocessing": {
+    "fit_on": "train_only",
+    "scaler": "models\\preprocessing\\standard_scaler.pkl",
+    "median_imputation": "train_only",
+    "feature_order": "features\\feature_order.json"
+  },
+  "outputs": {
+    "train": "data\\processed\\train\\train.csv",
+    "validation": "data\\processed\\val\\val.csv",
+    "test": "data\\processed\\test\\test.csv"
+  },
+  "notes": [
+    "Chronological 80/10/10 split used.",
+    "No random row splitting used.",
+    "Median imputation fitted on training data only.",
+    "StandardScaler fitted on training data only.",
+    "Binary features were preserved as 0/1.",
+    "Labels were excluded from model features.",
+    "Metadata and provenance columns were excluded from model features.",
+    "No artificial attack classes were created.",
+    "Current dataset contains the labels actually present in M2."
+  ]
+}
